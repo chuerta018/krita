@@ -106,34 +106,49 @@ void KisCanvasControlsManager::transformColor(int step)
     if (!m_view) return;
     if (!m_view->canvasBase()) return;
     if (!m_view->canvasResourceProvider()->resourceManager()) return;
-    KConfigGroup hotkeycfg =  KSharedConfig::openConfig()->group("colorhotkeys");
+    KConfigGroup hotkeycfg =  KSharedConfig::openConfig()->group("colorhotkeys");// I dont realy know what This stuff does// Aside from maybe Krita.Action labels to commit the actions
     int steps = hotkeycfg.readEntry("steps_lightness", 10);
     if (steps <= 0) {
         steps = 1;
     }
 
-
-    KoColor color = m_view->canvasResourceProvider()->resourceManager()->resource(KoCanvasResource::ForegroundColor).value<KoColor>();
-    if (color.colorSpace()->colorModelId().id()=="CMYKA" || color.colorSpace()->colorModelId().id()=="XYZA"){
+//Note all Notes added are by me, lines with "Iadded " are written by me everything else are by the developers of Krita
+    KoColor color = m_view->canvasResourceProvider()->resourceManager()->resource(KoCanvasResource::ForegroundColor).value<KoColor>();//This 
+ // if( (rgb.getRed() == 0 &&rgb.getblue() == 0 &&rgb.getgreen() == 0 ) || (rgb.getRed() == 255 &&rgb.getblue() == 255 && rgb.getgreen() == 255 ))///I added for edge case
+  
+    if (color.colorSpace()->colorModelId().id()=="CMYKA" || color.colorSpace()->colorModelId().id()=="XYZA")
+    {
         QColor rgb = color.toQColor();
         int h = 0, s = 0, v = 0;
-        rgb.getHsv(&h,&s,&v);
-        if ((v < 255) || ((s == 0) || (s == 255))) {
-            v += step;
+        rgb.getHsv(&h,&s,&v);//Example or Random RGB color 105-55-210
+         //Hard Code Fix
+        int tempHue = h;
+        if ((v < 255) || ((s == 0) || (s == 255))) { // recall -STEP(25) is to make the color darker // recall STEP(25) is to make the color lighter
+            v += step; //AKA Value to 0 makes it darker
             v = qBound(0,v,255);
+            h = tempHue;//I added
         } else {
-            s += -step;
+            s += -step;// AKA saturation to 0 is lighter
             s = qBound(0,s,255);
+            h = tempHue;// I added
         }
         rgb.setHsv(h,s,v);
         color.fromQColor(rgb);
+        h = tempHue;//I added
     } else if (step<0){
         color.colorSpace()->decreaseLuminosity(color.data(), 1.0/steps);
+        h = tempHue;//I added
     } else {
         color.colorSpace()->increaseLuminosity(color.data(), 1.0/steps);
+        h = tempHue;//I added      
     }
+     
+        
     m_view->canvasResourceProvider()->resourceManager()->setResource(KoCanvasResource::ForegroundColor, color);
-}
+  
+  
+}//end of function 
+    
 void KisCanvasControlsManager::transformSaturation(int step)
 {
     if (!m_view) return;
